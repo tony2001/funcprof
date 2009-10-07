@@ -78,7 +78,10 @@ static char *mt_get_function_name(TSRMLS_D) /* {{{ */
 	}
 #else
 	class_name = "";
-	if (exec_data && exec_data->object.ptr && Z_OBJCE_P(exec_data->object.ptr)) {
+
+	if (exec_data && exec_data->ce) {
+		class_name = exec_data->ce->name;
+	} else if (exec_data && exec_data->object.ptr && Z_OBJCE_P(exec_data->object.ptr)) {
 		class_name = Z_OBJCE_P(exec_data->object.ptr)->name;
 	}
 
@@ -228,11 +231,18 @@ PHP_RINIT_FUNCTION(funcprof)
 {
 	int dummy = 1;
 
+	zend_hash_init(&FUNCPROF_G(ignore_funcs_hash), 16, NULL, NULL, 0);
+
+	php_funcprof_parse_ignore_funcs(TSRMLS_C);
+	/* always ignore our own funcs */
+	zend_hash_add(&FUNCPROF_G(ignore_funcs_hash), "funcprof_set_begin_callback", sizeof("funcprof_set_begin_callback"), (void *)&dummy, sizeof(int), NULL);
+	zend_hash_add(&FUNCPROF_G(ignore_funcs_hash), "funcprof_set_end_callback", sizeof("funcprof_set_end_callback"), (void *)&dummy, sizeof(int), NULL);
+	zend_hash_add(&FUNCPROF_G(ignore_funcs_hash), "funcprof_set_begin_callback_int", sizeof("funcprof_set_begin_callback_int"), (void *)&dummy, sizeof(int), NULL);
+	zend_hash_add(&FUNCPROF_G(ignore_funcs_hash), "funcprof_set_end_callback_int", sizeof("funcprof_set_end_callback_int"), (void *)&dummy, sizeof(int), NULL);
+
 	if (!FUNCPROF_G(enabled)) {
 		return SUCCESS;
 	}
-
-	zend_hash_init(&FUNCPROF_G(ignore_funcs_hash), 16, NULL, NULL, 0);
 
 	if (!funcprof_execute_initialized) {
 		funcprof_old_execute = zend_execute;
@@ -242,13 +252,6 @@ PHP_RINIT_FUNCTION(funcprof)
 		zend_execute_internal = funcprof_execute_internal;
 		funcprof_execute_initialized = 1;
 	}
-
-	php_funcprof_parse_ignore_funcs(TSRMLS_C);
-	/* always ignore our own funcs */
-	zend_hash_add(&FUNCPROF_G(ignore_funcs_hash), "funcprof_set_begin_callback", sizeof("funcprof_set_begin_callback"), (void *)&dummy, sizeof(int), NULL);
-	zend_hash_add(&FUNCPROF_G(ignore_funcs_hash), "funcprof_set_end_callback", sizeof("funcprof_set_end_callback"), (void *)&dummy, sizeof(int), NULL);
-	zend_hash_add(&FUNCPROF_G(ignore_funcs_hash), "funcprof_set_begin_callback_int", sizeof("funcprof_set_begin_callback_int"), (void *)&dummy, sizeof(int), NULL);
-	zend_hash_add(&FUNCPROF_G(ignore_funcs_hash), "funcprof_set_end_callback_int", sizeof("funcprof_set_end_callback_int"), (void *)&dummy, sizeof(int), NULL);
 	return SUCCESS;
 }
 /* }}} */
