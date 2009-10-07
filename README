@@ -1,0 +1,6 @@
+funcprof PHP extension
+======================
+
+Simple extension for function-based profiling of PHP scripts.
+Calls callbacks when entering a PHP function and leaving it, passing its name to the callback.
+Internal and user-defined functions are handled separately.
