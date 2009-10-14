@@ -85,10 +85,10 @@ static char *mt_get_function_name(TSRMLS_D) /* {{{ */
 		class_name = Z_OBJCE_P(exec_data->object.ptr)->name;
 	}
 
-	if (class_name[0] == '\0') {
-		current_fname = get_active_function_name(TSRMLS_C);
-	} else {
-		fname = get_active_function_name(TSRMLS_C);
+	if (exec_data && class_name[0] == '\0') {
+		current_fname = exec_data->function_state.function->common.function_name;
+	} else if (exec_data) {
+		fname = exec_data->function_state.function->common.function_name;
 		if (fname) {
 			class_name_len = strlen(class_name);
 			fname_len = strlen(fname);
@@ -262,20 +262,28 @@ PHP_RSHUTDOWN_FUNCTION(funcprof)
 {
 	if (FUNCPROF_G(begin_callback)) {
 		zval_ptr_dtor(&FUNCPROF_G(begin_callback));
+		FUNCPROF_G(begin_callback) = NULL;
 		efree(FUNCPROF_G(begin_callback_name));
+		FUNCPROF_G(begin_callback_name) = NULL;
 	}
 	if (FUNCPROF_G(end_callback)) {
 		zval_ptr_dtor(&FUNCPROF_G(end_callback));
+		FUNCPROF_G(end_callback) = NULL;
 		efree(FUNCPROF_G(end_callback_name));
+		FUNCPROF_G(end_callback_name) = NULL;
 	}
 
 	if (FUNCPROF_G(begin_callback_int)) {
 		zval_ptr_dtor(&FUNCPROF_G(begin_callback_int));
+		FUNCPROF_G(begin_callback_int) = NULL;
 		efree(FUNCPROF_G(begin_callback_name_int));
+		FUNCPROF_G(begin_callback_name_int) = NULL;
 	}
 	if (FUNCPROF_G(end_callback_int)) {
 		zval_ptr_dtor(&FUNCPROF_G(end_callback_int));
+		FUNCPROF_G(end_callback_int) = NULL;
 		efree(FUNCPROF_G(end_callback_name_int));
+		FUNCPROF_G(end_callback_name_int) = NULL;
 	}
 
 	if (!FUNCPROF_G(enabled)) {
